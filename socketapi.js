@@ -20,25 +20,30 @@ const short = require('short-uuid');
 //   io.to(userId).emit("hi");
 // });
 const users = new Map()
+const rooms = []
+const pokerParty = new Map()
 io.on("connection", (socket) => {
   console.log(socket.id + " connected");
   io.emit("message", "hi")
 
   socket.on("create-room", () => {
-    const roomId = 'bunny'
+    const roomId = short.generate();
+    rooms.push(roomId)
     console.log("created a room: " + roomId);
     io.emit("create-room-emit", roomId)
   });
 
-  socket.on("join-room", ({ roomId }) => {
-    socket.join(roomId) // case for if room id does not exist 
-    console.log("welcome " + socket.id + " to room " + roomId);
-    io.emit('user-id', socket.id)
+  socket.on("join-room", ({ roomId, name }) => {
+    socket.join(roomId) // case for if room id does not exist
+    users.set({ name }, socket.id)
+    pokerParty.set(name, roomId)
+    console.log("welcome " + name + " to room " + roomId);
+    io.to(roomId).emit('user-id', name)
   });
 
-  socket.on("entered-name", ({ name }) => {
-    users.set(socket.id, { name })
-    io.emit('stored name', name)
+  socket.on("get-name-client", ({ name }) => {
+    let sid = users.get(name)
+    io.emit('get-name-server', sid)
   })
 
 
