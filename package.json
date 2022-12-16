@@ -12,6 +12,7 @@
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
+    "randimals": "^2.0.3",
     "redis": "^4.5.1",
     "short-uuid": "^4.2.2",
     "socket.io": "^4.5.4",
