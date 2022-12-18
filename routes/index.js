@@ -1,16 +1,10 @@
 var express = require("express");
 var router = express.Router();
-const randimals = require("randimals");
+const gfynonce = require("gfynonce");
 
 /* GET home page. */
 router.put("/room", function (req, res, next) {
-  const roomId = randimals({
-    adjectives: 1,
-    animals: 1,
-    case: "capital",
-    separator: "none",
-    format: "snake",
-  });
+  const roomId = gfynonce({ adjectives: 2, separator: "" });
   res.json({ roomId: roomId });
 });
 

@@ -54,8 +54,10 @@ io.on("connection", (socket) => {
       let notUsers = room.users.filter((user) => user.id !== socket.id);
       let user = room.users.filter((user) => user.id === socket.id)[0];
 
-      user.vote = card;
-      room.users = [...notUsers, user];
+      if (user) {
+        user.vote = card;
+        room.users = [...notUsers, user];
+      }
 
       roomsMap.set(roomId, room);
       updateClient();
