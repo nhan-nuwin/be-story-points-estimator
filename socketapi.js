@@ -10,17 +10,6 @@ const socketapi = {
 
 const short = require("short-uuid");
 const randimals = require("randimals");
-// Add your socket.io logic here!
-// io.on("connection", function (socket) {
-//   console.log(socket.id + " connected");
-//   const userId = socket.id;
-
-//   socket.join(userId);
-
-//   // and then later
-//   io.to(userId).emit("hi");
-// });
-
 // Model
 // User
 // {
@@ -33,81 +22,103 @@ const randimals = require("randimals");
 // {
 //   id: roomId,
 //   users: [],
-//   captain: socket.id
+//   state: showCards / hideCards
 // }
 
-const usersMap = new Map();
 const roomsMap = new Map();
-let users = [];
 let rooms = [];
-// const pokerParty = new Map();
 io.on("connection", (socket) => {
   console.log(socket.id + " connected");
 
-  socket.on("create-room", () => {
-    const roomId = randimals({
-      adjectives: 1,
-      animals: 1,
-      case: "capital",
-      separator: "none",
-      format: "snake",
-    });
-
-    roomsMap.set(roomId, { id: roomId, users: [] });
-    console.log("created a room: " + roomId);
-    io.emit("create-room-emit", roomId);
+  socket.on("create-room", (roomId) => {
+    roomsMap.set(roomId, { id: roomId, users: [], state: "hideCards" });
   });
 
   socket.on("join-room", ({ roomId, name }) => {
     socket.join(roomId);
 
     const user = { id: socket.id, roomId, name, vote: null };
-    usersMap.set(socket.id, user);
-    usersToArray();
 
     const room = roomsMap.get(roomId);
-    // insure users are in the correct rooms
-    const usersArr = users.filter((user) => user.roomId === roomId);
     if (room) {
-      room.users = usersArr;
+      room.users.push(user);
     }
 
-    console.log("welcome " + name + " to room " + roomId);
-    io.to(roomId).emit("user-id", name);
     updateClient();
   });
 
-  socket.on("get-name-client", () => {
-    let user = usersMap.get(socket.id);
+  socket.on("vote", ({ roomId, card }) => {
+    let room = roomsMap.get(roomId);
 
-    if (user) {
-      io.emit("get-name-server", user);
-    } else {
-      io.emit("new-user-server");
+    if (room) {
+      let notUsers = room.users.filter((user) => user.id !== socket.id);
+      let user = room.users.filter((user) => user.id === socket.id)[0];
+
+      user.vote = card;
+      room.users = [...notUsers, user];
+
+      roomsMap.set(roomId, room);
+      updateClient();
     }
   });
+
+  socket.on("reset-room", (roomId) => {
+    let room = roomsMap.get(roomId);
+
+    if (room) {
+      console.log(room.users);
+      let users = room.users.map((each) => {
+        return { ...each, vote: null };
+      });
+      room.users = users;
+
+      roomsMap.set(roomId, room);
+      updateClient();
+    }
+  });
+
+  socket.on("hide-cards", (roomId) => {
+    roomHideCards(roomId);
+    updateClient();
+  });
+
+  socket.on("show-cards", (roomId) => {
+    roomShowCards(roomId);
+    updateClient();
+  });
 });
-2;
-function updateClient() {
-  roomsToArray();
-  io.emit("update-client", rooms);
-}
 
 io.on("disconnect", (socket) => {
   console.log(socket.id + "disconnected");
 });
-// end of socket.io logic
 
 // Ensures our arrays have unique values before we send it off.
-function usersToArray() {
-  let userArr = [];
-  usersMap.forEach((user) => userArr.push(user));
-  users = userArr;
-}
 function roomsToArray() {
   let roomsArr = [];
   roomsMap.forEach((room) => roomsArr.push(room));
   rooms = roomsArr;
 }
+
+function updateClient() {
+  roomsToArray();
+  io.emit("update-client", rooms);
+}
+
+function roomHideCards(roomId) {
+  let room = roomsMap.get(roomId);
+  room.state = "hideCards";
+}
+
+function roomShowCards(roomId) {
+  let room = roomsMap.get(roomId);
+  room.state = "showCards";
+}
+
+// function removeUser(socketId) {
+//   roomsMap.forEach( room => {
+//     room.users;
+
+//   });
+// }
 
 module.exports = socketapi;
