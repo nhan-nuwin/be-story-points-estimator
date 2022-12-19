@@ -1,6 +1,7 @@
 const io = require("socket.io")({
   cors: {
-    origin: "http://localhost:4200",
+    // origin: "http://localhost:4200",
+    origin: "https://oyster-app-yglb6.ondigitalocean.app",
     methods: ["GET", "POST"],
   },
 });
